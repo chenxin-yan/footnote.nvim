@@ -3,7 +3,7 @@ local M = {}
 local function get_next_footnote_number(buffer)
   local max_num = 0
   for _, line in ipairs(buffer) do
-    for match in string.gmatch(line, '%[%^%d]') do
+    for match in string.gmatch(line, '%[%^%d+]') do
       local num = tonumber(string.match(match, '%d+'))
       if num > max_num then
         ---@diagnostic disable-next-line: cast-local-type
@@ -26,32 +26,30 @@ end
 
 function M.new_footnote()
   -- TODO: implement when word undercursor already has footnote, goto that footnote
-
-  local bufnr = vim.api.nvim_get_current_buf()
   local cursor_pos = vim.api.nvim_win_get_cursor(0)
   local row = cursor_pos[1]
   local col = cursor_pos[2]
 
-  local buffer = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  local buffer = vim.api.nvim_buf_get_lines(0, 0, -1, false)
   local next_num = get_next_footnote_number(buffer)
   local footnote_ref = string.format('[^%d]', next_num)
   local footnote_content = string.format('[^%d]: ', next_num)
 
   -- Get the end of the word the cursor is on
-  local word_end = get_word_end(bufnr, row, col)
+  local word_end = get_word_end(0, row, col)
 
   -- Insert footnote label at the end of the word
-  vim.api.nvim_buf_set_text(bufnr, row - 1, word_end, row - 1, word_end, { footnote_ref })
+  vim.api.nvim_buf_set_text(0, row - 1, word_end, row - 1, word_end, { footnote_ref })
 
   -- Add footnote label to jumplist
   vim.api.nvim_win_set_cursor(0, { row, word_end + string.len(footnote_ref) - 1 })
   vim.cmd 'normal! m`'
 
   -- Insert footnote reference at the end of the buffer
-  vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, { '', footnote_content })
+  vim.api.nvim_buf_set_lines(0, -1, -1, false, { '', footnote_content })
 
   -- Move cursor to the footnote reference
-  local line_count = vim.api.nvim_buf_line_count(bufnr)
+  local line_count = vim.api.nvim_buf_line_count(0)
   vim.api.nvim_win_set_cursor(0, { line_count, string.len(footnote_content) })
   vim.cmd 'startinsert!'
 end

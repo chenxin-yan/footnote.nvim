@@ -73,6 +73,9 @@ function M.setup(opts)
   local default = {
     keys = {
       new_footnote = '<C-f>',
+      organize_footnotes = '<leader>of',
+      next_footnote = ']f',
+      prev_footnote = '[f',
     },
     organize_on_save = true,
   }
@@ -83,12 +86,38 @@ function M.setup(opts)
     desc = 'footnote.nvim keymaps',
     pattern = { 'markdown' },
     callback = function()
-      vim.keymap.set(
-        { 'i', 'n' },
-        opts.keys.new_footnote,
-        "<cmd>lua require('footnote').new_footnote()<cr>",
-        { buffer = 0, silent = true, desc = 'Create new markdown footnote' }
-      )
+      if opts.keys.new_footnote ~= '' then
+        vim.keymap.set(
+          { 'i', 'n' },
+          opts.keys.new_footnote,
+          "<cmd>lua require('footnote').new_footnote()<cr>",
+          { buffer = 0, silent = true, desc = 'Create markdown footnote' }
+        )
+      end
+      if opts.keys.organize_footnotes ~= '' then
+        vim.keymap.set(
+          { 'n' },
+          opts.keys.organize_footnotes,
+          "<cmd>lua require('footnote').organize_footnotes()<cr>",
+          { buffer = 0, silent = true, desc = 'Organize footnote' }
+        )
+      end
+      if opts.keys.next_footnote ~= '' then
+        vim.keymap.set(
+          { 'n' },
+          opts.keys.next_footnote,
+          "<cmd>lua require('footnote').next_footnote()<cr>",
+          { buffer = 0, silent = true, desc = 'Next footnote' }
+        )
+      end
+      if opts.keys.prev_footnote ~= '' then
+        vim.keymap.set(
+          { 'n' },
+          opts.keys.prev_footnote,
+          "<cmd>lua require('footnote').prev_footnote()<cr>",
+          { buffer = 0, silent = true, desc = 'Previous footnote' }
+        )
+      end
     end,
   })
 

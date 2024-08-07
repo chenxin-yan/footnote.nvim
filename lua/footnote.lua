@@ -25,6 +25,8 @@ local function get_word_end(bufnr, row, col)
 end
 
 function M.new_footnote()
+  -- TODO: implement when word undercursor already has footnote, goto that footnote
+
   local bufnr = vim.api.nvim_get_current_buf()
   local cursor_pos = vim.api.nvim_win_get_cursor(0)
   local row = cursor_pos[1]

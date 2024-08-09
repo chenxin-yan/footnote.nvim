@@ -99,11 +99,54 @@ function M.next_footnote()
   vim.api.nvim_win_set_cursor(0, { refLocation[1], refLocation[2] })
 end
 
+--- Get the location of previous footnote ref
+---@param bufnr number the buffer numer (0 for current buffer)
+---@param row number the row of current cursor
+---@param col number the col of current cursor
+---@return table | nil refLocation  location of the previous footnote in a table {row, col}. If not found, return 'nil'
+local function find_prev(bufnr, row, col)
+  local buffer = vim.api.nvim_buf_get_lines(bufnr, 0, row, false)
+  buffer[#buffer] = string.sub(buffer[#buffer], 0, col)
+  for i = #buffer, 1, -1 do
+    local line = buffer[i]
+    if string.find(line, '^%[%^%d+%]:') then
+      goto continue
+    end
+    local refCol = 0
+    local last = nil
+    while true do
+      ---@diagnostic disable-next-line: cast-local-type
+      refCol = string.find(line, '%[%^%d+]', refCol + 1)
+      if refCol == nil then
+        break
+      end
+      last = refCol
+    end
+    if last ~= nil then
+      return { i, last + 1 }
+    end
+    ::continue::
+  end
+  return nil
+end
+
 function M.prev_footnote()
-  -- TODO: implement footnote navigation
+  local cursor_pos = vim.api.nvim_win_get_cursor(0)
+  local row = cursor_pos[1]
+  local col = cursor_pos[2]
+
+  -- get the index of the start of previous footnote ref
+  local refLocation = find_prev(0, row, col)
+  if refLocation == nil then
+    return
+  end
+
+  -- move cursor to the next footnote ref
+  vim.api.nvim_win_set_cursor(0, { refLocation[1], refLocation[2] })
 end
 
 function M.setup(opts)
+  -- TODO: implement organize_on_new
   opts = opts or {}
   local default = {
     keys = {
@@ -116,6 +159,7 @@ function M.setup(opts)
   }
 
   opts = vim.tbl_deep_extend('force', default, opts)
+  -- print(vim.inspect(opts))
 
   vim.api.nvim_create_autocmd('FileType', {
     desc = 'footnote.nvim keymaps',
@@ -131,23 +175,18 @@ function M.setup(opts)
       end
       if opts.keys.organize_footnotes ~= '' then
         vim.keymap.set(
-          { 'n' },
+          'n',
           opts.keys.organize_footnotes,
           "<cmd>lua require('footnote').organize_footnotes()<cr>",
           { buffer = 0, silent = true, desc = 'Organize footnote' }
         )
       end
       if opts.keys.next_footnote ~= '' then
-        vim.keymap.set(
-          { 'n' },
-          opts.keys.next_footnote,
-          "<cmd>lua require('footnote').next_footnote()<cr>",
-          { buffer = 0, silent = true, desc = 'Next footnote' }
-        )
+        vim.keymap.set('n', opts.keys.next_footnote, "<cmd>lua require('footnote').next_footnote()<cr>", { buffer = 0, silent = true, desc = 'Next footnote' })
       end
       if opts.keys.prev_footnote ~= '' then
         vim.keymap.set(
-          { 'n' },
+          'n',
           opts.keys.prev_footnote,
           "<cmd>lua require('footnote').prev_footnote()<cr>",
           { buffer = 0, silent = true, desc = 'Previous footnote' }

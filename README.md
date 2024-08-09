@@ -1,4 +1,4 @@
-# Footnote.nvim
+# 🏷️ Footnote.nvim
 
 > [!WARNING]
 > This plugin is still under active development. Some features are not fully implemented, and issues are expected.
@@ -24,7 +24,6 @@ install using [lazy.nvim](https://github.com/folke/lazy.nvim):
 ```lua
 return {
   'chenxin-yan/footnote.nvim',
-  ft = 'markdown',
   config = function()
     require('footnote').setup {
       -- add any configuration here
@@ -48,6 +47,30 @@ local default = {
   organize_on_save = true,
 }
 ```
+
+<details><summary>Example Configuration</summary>
+
+```lua
+  return {
+    'chenxin-yan/footnote.nvim',
+    ft = 'markdown',
+    config = function()
+      require('footnote').setup {
+        keys = {
+          new_footnote = '<C-f>',
+          organize_footnotes = '',
+          next_footnote = ']f',
+          prev_footnote = '[f',
+        },
+        organize_on_save = true,
+      }
+    end,
+  }
+```
+
+</details>
+
+## ⌨️ Mappings
 
 You can disable any keymaps by setting it to `''`, and you can also manually set these keymaps.
 
@@ -99,3 +122,4 @@ vim.keymap.set(
 
 - README.md inspired by [Folke](https://github.com/folke)
 - [markdowny.nvim](https://github.com/antonk52/markdowny.nvim)
+- [vim-markdownfootnote](https://github.com/vim-pandoc/vim-markdownfootnotes)

@@ -156,38 +156,39 @@ function M.setup(opts)
       prev_footnote = '[f',
     },
     organize_on_save = true,
+    organize_on_new = true,
   }
 
-  opts = vim.tbl_deep_extend('force', default, opts)
+  Opts = vim.tbl_deep_extend('force', default, opts)
   -- print(vim.inspect(opts))
 
   vim.api.nvim_create_autocmd('FileType', {
     desc = 'footnote.nvim keymaps',
     pattern = { 'markdown' },
     callback = function()
-      if opts.keys.new_footnote ~= '' then
+      if Opts.keys.new_footnote ~= '' then
         vim.keymap.set(
           { 'i', 'n' },
-          opts.keys.new_footnote,
+          Opts.keys.new_footnote,
           "<cmd>lua require('footnote').new_footnote()<cr>",
           { buffer = 0, silent = true, desc = 'Create markdown footnote' }
         )
       end
-      if opts.keys.organize_footnotes ~= '' then
+      if Opts.keys.organize_footnotes ~= '' then
         vim.keymap.set(
           'n',
-          opts.keys.organize_footnotes,
+          Opts.keys.organize_footnotes,
           "<cmd>lua require('footnote').organize_footnotes()<cr>",
           { buffer = 0, silent = true, desc = 'Organize footnote' }
         )
       end
-      if opts.keys.next_footnote ~= '' then
-        vim.keymap.set('n', opts.keys.next_footnote, "<cmd>lua require('footnote').next_footnote()<cr>", { buffer = 0, silent = true, desc = 'Next footnote' })
+      if Opts.keys.next_footnote ~= '' then
+        vim.keymap.set('n', Opts.keys.next_footnote, "<cmd>lua require('footnote').next_footnote()<cr>", { buffer = 0, silent = true, desc = 'Next footnote' })
       end
-      if opts.keys.prev_footnote ~= '' then
+      if Opts.keys.prev_footnote ~= '' then
         vim.keymap.set(
           'n',
-          opts.keys.prev_footnote,
+          Opts.keys.prev_footnote,
           "<cmd>lua require('footnote').prev_footnote()<cr>",
           { buffer = 0, silent = true, desc = 'Previous footnote' }
         )
@@ -195,7 +196,7 @@ function M.setup(opts)
     end,
   })
 
-  if opts.organize_on_save then
+  if Opts.organize_on_save then
     vim.api.nvim_create_autocmd({ 'BufWritePost' }, {
       group = vim.api.nvim_create_augroup('organize footnotes', { clear = true }),
       pattern = { '*.md' },

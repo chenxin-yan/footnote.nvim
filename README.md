@@ -5,13 +5,16 @@
 
 A neovim plugin to elevate markdown footnote editing experiences.
 
+<!-- TODO: update footnote preview GIF -->
+
 ![new-footnote-preview](./new-footnote-preview.gif)
 
 ## ✨ Features
 
 - Create ordinal footnote
-- Organize footnotes & cleanup undefined footnotes `(WIP)`
-- Goto next/prev footnote `(WIP)`
+- Organize footnotes based on occurence
+- cleanup undefined footnotes
+- Goto next/prev footnote
 
 ## ⚡️ Requirements
 
@@ -45,6 +48,7 @@ local default = {
     prev_footnote = '[f',
   },
   organize_on_save = true,
+  organize_on_new = true,
 }
 ```
 
@@ -62,7 +66,6 @@ local default = {
           next_footnote = ']f',
           prev_footnote = '[f',
         },
-        organize_on_save = true,
       }
     end,
   }
@@ -117,6 +120,10 @@ vim.keymap.set(
 
 - **Create new footnote**: `require('footnote').new_footnote()`
   - After editing footnote, you can use `<C-o>`/`<C-i>` to navigate between footnote and its reference
+- **Next/Prev footnote**: `require('footnote').next_footnote()`, `require('footnote').prev_footnote()`
+- **Organize footnote**: `require('footnote').organize_footnotes()`
+  - organize all references based on order of orcurrence in the document
+  - footnote content would be sorted based on numerical value in the footnote reference
 
 ## 💡 Inspiration
 

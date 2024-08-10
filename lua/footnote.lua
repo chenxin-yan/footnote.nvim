@@ -25,6 +25,11 @@ local function get_word_end(bufnr, row, col)
 end
 
 function M.new_footnote()
+  -- FIXME: organize_on_save not work as expected when the footnote being created need to be formatted
+  if Opts.organize_on_new then
+    M.organize_footnotes()
+  end
+
   -- TODO: implement when word undercursor already has footnote, goto that footnote
   local cursor_pos = vim.api.nvim_win_get_cursor(0)
   local row = cursor_pos[1]
@@ -54,8 +59,114 @@ function M.new_footnote()
   vim.cmd 'startinsert!'
 end
 
+local function ref_rename(bufrn, ref_locations, from, to)
+  if from == to then
+    return
+  end
+  local buffer = vim.api.nvim_buf_get_lines(bufrn, 0, -1, false)
+  for _, location in ipairs(ref_locations) do
+    local label = string.sub(buffer[location[1]], location[2], location[3])
+    local number = tonumber(string.sub(label, 3, -2))
+    local row = location[1]
+    local startCol = location[2]
+    local endCol = location[3]
+
+    -- swap footnote labels
+    if number == from then
+      vim.api.nvim_buf_set_text(bufrn, row - 1, startCol + 1, row - 1, endCol - 1, { tostring(to) })
+    elseif number == to then
+      vim.api.nvim_buf_set_text(bufrn, row - 1, startCol + 1, row - 1, endCol - 1, { tostring(from) })
+    end
+  end
+end
+
+local function content_rename(bufrn, content_locations, from, to)
+  if from == to then
+    return
+  end
+  local buffer = vim.api.nvim_buf_get_lines(bufrn, 0, -1, false)
+  -- local fromSwaped, toSwaped = false
+  for _, row in ipairs(content_locations) do
+    local num = string.match(buffer[row], '%d+')
+    if tonumber(num) == from then
+      local i, j = string.find(buffer[row], '%d+')
+      ---@diagnostic disable-next-line: param-type-mismatch
+      vim.api.nvim_buf_set_text(bufrn, row - 1, i - 1, row - 1, j, { tostring(to) })
+    elseif tonumber(num) == to then
+      local i, j = string.find(buffer[row], '%d+')
+      ---@diagnostic disable-next-line: param-type-mismatch
+      vim.api.nvim_buf_set_text(bufrn, row - 1, i - 1, row - 1, j, { tostring(from) })
+    end
+  end
+end
+
 function M.organize_footnotes()
-  -- TODO: implement organize footnotes
+  local buffer = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+
+  -- find all footnote references with their locations
+  local ref_locations = {}
+  local content_locations = {}
+  for i, line in ipairs(buffer) do
+    if string.find(line, '^%[%^%d+%]:') then
+      content_locations[#content_locations + 1] = i
+      goto continue
+    end
+    local refStart = 0
+    local refEnd = nil
+    while true do
+      ---@diagnostic disable-next-line: cast-local-type
+      refStart, refEnd = string.find(line, '%[%^%d+%]', refStart + 1)
+      if refStart == nil or refEnd == nil then
+        break
+      end
+      ref_locations[#ref_locations + 1] = { i, refStart, refEnd }
+    end
+    ::continue::
+  end
+
+  -- iterate footnote and sort labels
+  local counter = 1
+  local finished = {}
+  for _, location in ipairs(ref_locations) do
+    buffer = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+    local label = string.sub(buffer[location[1]], location[2], location[3])
+    local number = tonumber(string.sub(label, 3, -2))
+
+    -- handle case in which there are multiple references point to one footnote
+    local notContains = true
+    for _, i in ipairs(finished) do
+      if i == number then
+        notContains = false
+        break
+      end
+    end
+
+    if notContains then
+      -- FIXME: infinite loop when current footnote reference is an orpahine; should implement orpahine cleanup
+      ref_rename(0, ref_locations, number, counter)
+      content_rename(0, content_locations, number, counter)
+      finished[#finished + 1] = counter
+      counter = counter + 1
+    end
+  end
+
+  -- sort footnote content
+  for i = 1, #content_locations, 1 do
+    buffer = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+    local target = content_locations[i]
+    for j = i, #content_locations, 1 do
+      local current = content_locations[j]
+      local num = string.match(buffer[current], '%d+')
+      if tonumber(num) == i and j ~= i then
+        local temp = buffer[target]
+        vim.api.nvim_buf_set_text(0, target - 1, 0, target - 1, -1, { buffer[current] })
+        vim.api.nvim_buf_set_text(0, current - 1, 0, current - 1, -1, { temp })
+        break
+      end
+    end
+  end
+
+  print 'Organize footnote'
 end
 
 --- Get the location of next footnote ref
@@ -146,7 +257,6 @@ function M.prev_footnote()
 end
 
 function M.setup(opts)
-  -- TODO: implement organize_on_new
   opts = opts or {}
   local default = {
     keys = {
@@ -156,7 +266,7 @@ function M.setup(opts)
       prev_footnote = '[f',
     },
     organize_on_save = true,
-    organize_on_new = true,
+    organize_on_new = false,
   }
 
   Opts = vim.tbl_deep_extend('force', default, opts)

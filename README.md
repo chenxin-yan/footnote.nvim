@@ -13,8 +13,10 @@ A neovim plugin to elevate markdown footnote editing experiences.
 
 - Create ordinal footnote
 - Organize footnotes based on occurence
-- cleanup undefined footnotes
+- cleanup orphan footnotes `(WIP)`
 - Goto next/prev footnote
+- Move between footnote references and its content `(WIP)`
+- Pick from existing footnote with content preview`(WIP)`
 
 ## ⚡️ Requirements
 
@@ -48,7 +50,7 @@ local default = {
     prev_footnote = '[f',
   },
   organize_on_save = true,
-  organize_on_new = true,
+  organize_on_new = false,
 }
 ```
 
@@ -66,6 +68,7 @@ local default = {
           next_footnote = ']f',
           prev_footnote = '[f',
         },
+        organize_on_new = false,
       }
     end,
   }

@@ -25,11 +25,6 @@ local function get_word_end(bufnr, row, col)
 end
 
 function M.new_footnote()
-  -- FIXME: organize_on_save not work as expected when the footnote being created need to be formatted
-  if Opts.organize_on_new then
-    M.organize_footnotes()
-  end
-
   -- TODO: implement when word undercursor already has footnote, goto that footnote
   local cursor_pos = vim.api.nvim_win_get_cursor(0)
   local row = cursor_pos[1]
@@ -57,6 +52,10 @@ function M.new_footnote()
   local line_count = vim.api.nvim_buf_line_count(0)
   vim.api.nvim_win_set_cursor(0, { line_count, string.len(footnote_content) })
   vim.cmd 'startinsert!'
+
+  if Opts.organize_on_new then
+    M.organize_footnotes()
+  end
 end
 
 local function ref_rename(bufrn, ref_locations, from, to)
@@ -214,6 +213,11 @@ function M.organize_footnotes()
     ::continue::
   end
 
+  -- move cursor after sorting/modifying footnote content
+  local cursor_pos = vim.api.nvim_win_get_cursor(0)
+  local cursor_row = cursor_pos[1]
+  local cursor_col = cursor_pos[2]
+
   -- sort footnote content
   for i = 1, #content_locations, 1 do
     buffer = vim.api.nvim_buf_get_lines(0, 0, -1, false)
@@ -225,10 +229,17 @@ function M.organize_footnotes()
         local temp = buffer[target]
         vim.api.nvim_buf_set_text(0, target - 1, 0, target - 1, -1, { buffer[current] })
         vim.api.nvim_buf_set_text(0, current - 1, 0, current - 1, -1, { temp })
+        if cursor_row == current then
+          cursor_row = target
+        elseif cursor_row == target then
+          cursor_row = current
+        end
         break
       end
     end
   end
+
+  vim.api.nvim_win_set_cursor(0, { cursor_row, cursor_col })
 
   print 'Organize footnote'
 end

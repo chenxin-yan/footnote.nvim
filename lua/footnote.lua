@@ -207,6 +207,11 @@ function M.organize_footnotes()
     ::continue::
   end
 
+  -- if no foonote is found, do nothing
+  if #ref_locations <= 0 then
+    return
+  end
+
   -- iterate footnote and sort labels
   local counter = 1
   for index = 1, #ref_locations, 1 do
@@ -361,7 +366,7 @@ function M.setup(opts)
       prev_footnote = '[f',
     },
     organize_on_save = true,
-    organize_on_new = false,
+    organize_on_new = true,
   }
 
   Opts = vim.tbl_deep_extend('force', default, opts)

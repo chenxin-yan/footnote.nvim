@@ -58,11 +58,11 @@ function M.new_footnote()
   end
 end
 
-local function ref_rename(bufrn, ref_locations, from, to)
+local function ref_rename(bufnr, ref_locations, from, to)
   if from == to then
     return
   end
-  local buffer = vim.api.nvim_buf_get_lines(bufrn, 0, -1, false)
+  local buffer = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   for index = 1, #ref_locations, 1 do
     local location = ref_locations[index]
     if location == nil then
@@ -79,39 +79,39 @@ local function ref_rename(bufrn, ref_locations, from, to)
       if Opts.debug_print then
         print('ref_rename: ' .. from .. ' -> ' .. to)
       end
-      vim.api.nvim_buf_set_text(bufrn, row - 1, startCol + 1, row - 1, endCol - 1, { tostring(to) })
+      vim.api.nvim_buf_set_text(bufnr, row - 1, startCol + 1, row - 1, endCol - 1, { tostring(to) })
     elseif number == to then
       if Opts.debug_print then
         print('ref_rename: ' .. to .. ' -> ' .. from)
       end
-      vim.api.nvim_buf_set_text(bufrn, row - 1, startCol + 1, row - 1, endCol - 1, { tostring(from) })
+      vim.api.nvim_buf_set_text(bufnr, row - 1, startCol + 1, row - 1, endCol - 1, { tostring(from) })
     end
     ::continue::
   end
 end
 
-local function content_rename(bufrn, content_locations, from, to)
+local function content_rename(bufnr, content_locations, from, to)
   if from == to then
     return
   end
-  local buffer = vim.api.nvim_buf_get_lines(bufrn, 0, -1, false)
+  local buffer = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   for _, row in ipairs(content_locations) do
     local num = string.match(buffer[row], '%d+')
     if tonumber(num) == from then
       local i, j = string.find(buffer[row], '%d+')
       ---@diagnostic disable-next-line: param-type-mismatch
-      vim.api.nvim_buf_set_text(bufrn, row - 1, i - 1, row - 1, j, { tostring(to) })
+      vim.api.nvim_buf_set_text(bufnr, row - 1, i - 1, row - 1, j, { tostring(to) })
     elseif tonumber(num) == to then
       local i, j = string.find(buffer[row], '%d+')
       ---@diagnostic disable-next-line: param-type-mismatch
-      vim.api.nvim_buf_set_text(bufrn, row - 1, i - 1, row - 1, j, { tostring(from) })
+      vim.api.nvim_buf_set_text(bufnr, row - 1, i - 1, row - 1, j, { tostring(from) })
     end
   end
 end
 
-local function cleanup_orphan(bufrn, ref_locations, content_locations, from)
+local function cleanup_orphan(bufnr, ref_locations, content_locations, from)
   -- FIXME: when repeat refrences before the orphan, the indexes of the line with orphan references in ref_locations would not shift correctly
-  local buffer = vim.api.nvim_buf_get_lines(bufrn, 0, -1, false)
+  local buffer = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   local isOrphan = true
   for _, row in ipairs(content_locations) do
     local num = tonumber(string.match(buffer[row], '%d+'))
@@ -134,8 +134,8 @@ local function cleanup_orphan(bufrn, ref_locations, content_locations, from)
       local endCol = location[3]
 
       if number == from then
-        vim.api.nvim_buf_set_text(bufrn, row - 1, startCol - 1, row - 1, endCol, {})
-        buffer = vim.api.nvim_buf_get_lines(bufrn, 0, -1, false)
+        vim.api.nvim_buf_set_text(bufnr, row - 1, startCol - 1, row - 1, endCol, {})
+        buffer = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
         ref_locations[index] = nil
         if Opts.debug_print then
           print('cleanup_orphan: ' .. from .. ' at row ' .. row)

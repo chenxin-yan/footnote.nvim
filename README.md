@@ -11,8 +11,8 @@ A neovim plugin that makes working with markdown footnote easier
 - Organize footnotes based on occurenc
 - cleanup orphan footnotes
 - Goto next/prev footnote
-- Move between footnote references and its content `(WIP)`
-- Pick from existing footnote with content preview`(WIP)`
+- Move between footnote references and its content
+- Pick from existing footnotes for insertion`(WIP)`
 
 ## ⚡️ Requirements
 
@@ -117,25 +117,24 @@ vim.keymap.set(
 
 ## 🚀 Usage
 
-**Create new footnote**: `require('footnote').new_footnote()`
+**Create new footnote**: `require('footnote').new_footnote()` (default: `<C-f>`)
 
-- After editing footnote, you can use `<C-o>`/`<C-i>` to navigate between footnote and its reference
+- if a footnote reference already exists at the end of the word under cursor, it would jump to that footnote
 
 ![new-footnote-preview](./new-footnote-preview.gif)
 
-**Organize footnote**: `require('footnote').organize_footnotes()`
+**Organize footnote**: `require('footnote').organize_footnotes()` (default: `<leader>of`)
 
 - organize all references based on order of orcurrence in the document
 - footnote content would be sorted based on numerical value in the footnote reference
 
 ![organize-foonotes-preview](./organize-footnotes-preview.gif)
 
-**Organize on new footnote**: `opts = {organize_on_new = true}`
+**Organize on new footnote**: `opts = {organize_on_new = true}` (default: `true`)
 
 ![organize-on-new-preview](./organize-on-new-preview.gif)
 
-**Next/Prev footnote**: `require('footnote').next_footnote()`, `require('footnote').prev_footnote()`
-
+**Next/Prev footnote**: `require('footnote').next_footnote()`, `require('footnote').prev_footnote()` (default: `]f`/`[f]`)
 ![footnote-navigation-preview](./footnote-navigation-preview.gif)
 
 ## 💡 Inspiration

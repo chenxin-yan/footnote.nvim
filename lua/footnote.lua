@@ -381,17 +381,17 @@ function M.setup(opts)
           { 'i', 'n' },
           Opts.keys.new_footnote,
           "<cmd>lua require('footnote').new_footnote()<cr>",
-          { buffer = 0, desc = 'Create markdown footnote' }
+          { desc = 'Create markdown footnote', buffer = 0 }
         )
       end
       if Opts.keys.organize_footnotes ~= '' then
-        vim.keymap.set('n', Opts.keys.organize_footnotes, "<cmd>lua require('footnote').organize_footnotes()<cr>", { buffer = 0, desc = 'Organize footnote' })
+        vim.keymap.set('n', Opts.keys.organize_footnotes, "<cmd>lua require('footnote').organize_footnotes()<cr>", { desc = 'Organize footnote', buffer = 0 })
       end
       if Opts.keys.next_footnote ~= '' then
-        vim.keymap.set('n', Opts.keys.next_footnote, "<cmd>lua require('footnote').next_footnote()<cr>", { buffer = 0, silent = true, desc = 'Next footnote' })
+        vim.keymap.set('n', Opts.keys.next_footnote, "<cmd>lua require('footnote').next_footnote()<cr>", { desc = 'Next footnote', buffer = 0 })
       end
       if Opts.keys.prev_footnote ~= '' then
-        vim.keymap.set('n', Opts.keys.prev_footnote, "<cmd>lua require('footnote').prev_footnote()<cr>", { buffer = 0, desc = 'Previous footnote' })
+        vim.keymap.set('n', Opts.keys.prev_footnote, "<cmd>lua require('footnote').prev_footnote()<cr>", { desc = 'Previous footnote', buffer = 0 })
       end
     end,
   })

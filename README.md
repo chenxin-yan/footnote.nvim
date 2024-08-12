@@ -15,7 +15,6 @@ A neovim plugin to elevate markdown footnote editing experiences.
 - Organize footnotes based on occurenc
 - cleanup orphan footnotes
 - Goto next/prev footnote
-- Support footnotes with multiple references `(WIP)`
 - Move between footnote references and its content `(WIP)`
 - Pick from existing footnote with content preview`(WIP)`
 

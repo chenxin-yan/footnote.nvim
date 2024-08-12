@@ -74,18 +74,37 @@ local function ref_rename(bufnr, ref_locations, from, to)
     local startCol = location[2]
     local endCol = location[3]
 
+    local shift = 0
+
     -- swap footnote labels
     if number == from then
       if Opts.debug_print then
         print('ref_rename: ' .. from .. ' -> ' .. to)
       end
+      shift = #tostring(to) - #tostring(from)
       vim.api.nvim_buf_set_text(bufnr, row - 1, startCol + 1, row - 1, endCol - 1, { tostring(to) })
     elseif number == to then
       if Opts.debug_print then
         print('ref_rename: ' .. to .. ' -> ' .. from)
       end
       vim.api.nvim_buf_set_text(bufnr, row - 1, startCol + 1, row - 1, endCol - 1, { tostring(from) })
+      shift = #tostring(from) - #tostring(to)
     end
+    if shift ~= 0 then
+      ref_locations[index][3] = ref_locations[index][3] + shift
+      for j = index, #ref_locations, 1 do
+        local next_location = ref_locations[j + 1]
+        if next_location == nil or next_location[1] ~= row then
+          break
+        end
+        ref_locations[j + 1][2] = ref_locations[j + 1][2] + shift
+        ref_locations[j + 1][3] = ref_locations[j + 1][3] + shift
+        if Opts.debug_print then
+          print('shifted(' .. shift .. '): ' .. ref_locations[j + 1][1] .. ', ' .. ref_locations[j + 1][2] .. ':' .. ref_locations[j + 1][3])
+        end
+      end
+    end
+
     ::continue::
   end
 end
@@ -109,8 +128,7 @@ local function content_rename(bufnr, content_locations, from, to)
   end
 end
 
-local function cleanup_orphan(bufnr, ref_locations, content_locations, from)
-  -- FIXME: when repeat refrences before the orphan, the indexes of the line with orphan references in ref_locations would not shift correctly
+local function cleanup_orphan(bufnr, ref_locations, content_locations, is_deleted, from)
   local buffer = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   local isOrphan = true
   for _, row in ipairs(content_locations) do
@@ -136,20 +154,21 @@ local function cleanup_orphan(bufnr, ref_locations, content_locations, from)
       if number == from then
         vim.api.nvim_buf_set_text(bufnr, row - 1, startCol - 1, row - 1, endCol, {})
         buffer = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-        ref_locations[index] = nil
+        is_deleted[index] = true
         if Opts.debug_print then
           print('cleanup_orphan: ' .. from .. ' at row ' .. row)
         end
+        local shift = endCol - startCol + 1
+
         for j = index, #ref_locations, 1 do
           local next_location = ref_locations[j + 1]
           if next_location == nil or next_location[1] ~= row then
             break
           end
-          local shift = endCol - startCol + 1
           ref_locations[j + 1][2] = ref_locations[j + 1][2] - shift
           ref_locations[j + 1][3] = ref_locations[j + 1][3] - shift
           if Opts.debug_print then
-            print('shifted: ' .. ref_locations[j + 1][1] .. ', ' .. ref_locations[j + 1][2] .. ':' .. ref_locations[j + 1][3])
+            print('shifted(' .. shift .. '): ' .. ref_locations[j + 1][1] .. ', ' .. ref_locations[j + 1][2] .. ':' .. ref_locations[j + 1][3])
           end
         end
       end
@@ -168,6 +187,7 @@ function M.organize_footnotes()
   -- find all footnote references with their locations
   local ref_locations = {}
   local content_locations = {}
+  local is_deleted = {}
   for i, line in ipairs(buffer) do
     if string.find(line, '^%[%^%d+%]:') then
       content_locations[#content_locations + 1] = i
@@ -182,6 +202,7 @@ function M.organize_footnotes()
         break
       end
       ref_locations[#ref_locations + 1] = { i, refStart, refEnd }
+      is_deleted[#is_deleted + 1] = false
     end
     ::continue::
   end
@@ -190,18 +211,16 @@ function M.organize_footnotes()
   local counter = 1
   for index = 1, #ref_locations, 1 do
     local location = ref_locations[index]
-    if location == nil then
+    if is_deleted[index] then
       goto continue
     end
     buffer = vim.api.nvim_buf_get_lines(0, 0, -1, false)
     local label = string.sub(buffer[location[1]], location[2], location[3])
     local number = tonumber(string.sub(label, 3, -2))
 
-    print(label)
-
     -- Process foonotes
     if number >= counter then
-      if not cleanup_orphan(0, ref_locations, content_locations, number) then
+      if not cleanup_orphan(0, ref_locations, content_locations, is_deleted, number) then
         if Opts.debug_print then
           print(number .. ' -> ' .. counter)
         end

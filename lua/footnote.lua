@@ -1,5 +1,8 @@
 local M = {}
 
+--- get the next foootnote number that need to added based on existing footnotes
+---@param buffer table contains the entire buffer
+---@return number next_footnote next footnote number
 local function get_next_footnote_number(buffer)
   local max_num = 0
   for _, line in ipairs(buffer) do
@@ -14,7 +17,11 @@ local function get_next_footnote_number(buffer)
   return max_num + 1
 end
 
--- Function to get the end of the word the cursor is on
+--- get the index of end of the word the cursor is on
+---@param bufnr number buffer number ("0" for current buffer)
+---@param row number row of the cursor
+---@param col number col of the cursor
+---@return number col the col of the end of the word
 local function get_word_end(bufnr, row, col)
   local line = vim.api.nvim_buf_get_lines(bufnr, row - 1, row, false)[1]
   local word_end = col
@@ -24,7 +31,11 @@ local function get_word_end(bufnr, row, col)
   return word_end
 end
 
--- check if a given location in on a footnote reference
+--- check if a given location in on a footnote reference
+---@param buffer table the buffer to check for
+---@param row number the row of the given location
+---@param col number the col of the given location
+---@return number | nil col the start col of the footnote. If not on a footnote, return nil
 local function is_on_ref(buffer, row, col)
   local line = buffer[row]
   local refColStart = 0
@@ -41,6 +52,7 @@ local function is_on_ref(buffer, row, col)
   return nil
 end
 
+--- Create a new footnote, if the footnote already exists at the location, jump to the footnote or its reference
 function M.new_footnote()
   local cursor_pos = vim.api.nvim_win_get_cursor(0)
   local row = cursor_pos[1]
@@ -111,7 +123,13 @@ function M.new_footnote()
   end
 end
 
+--- rename all footnote references with given label to another label
+---@param bufnr number buffer number
+---@param ref_locations table locations of all the footnote references
+---@param from number the label to change
+---@param to number the label to change to
 local function ref_rename(bufnr, ref_locations, from, to)
+  -- TODO: refactor to put ref_locations and ref_deleted into one table
   if from == to then
     return
   end
@@ -162,6 +180,11 @@ local function ref_rename(bufnr, ref_locations, from, to)
   end
 end
 
+--- rename the footnote content list
+---@param bufnr number buffer number
+---@param content_locations table locations of all footnote content
+---@param from number the label to change
+---@param to number the label to change to
 local function content_rename(bufnr, content_locations, from, to)
   if from == to then
     return
@@ -181,6 +204,12 @@ local function content_rename(bufnr, content_locations, from, to)
   end
 end
 
+--- Cleanup orphan footnote references in a given buffer
+---@param bufnr number buffer number
+---@param ref_locations table locations of all the footnote references
+---@param content_locations table locations of all the footnote content
+---@param is_deleted table flags of whether a given footnote reference is deleted
+---@param from number the refernce label to be checked
 local function cleanup_orphan(bufnr, ref_locations, content_locations, is_deleted, from)
   local buffer = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   local isOrphan = true
@@ -234,6 +263,7 @@ local function cleanup_orphan(bufnr, ref_locations, content_locations, is_delete
   end
 end
 
+--- Organize foonote references and content and sort based on occurence
 function M.organize_footnotes()
   local buffer = vim.api.nvim_buf_get_lines(0, 0, -1, false)
 
@@ -348,6 +378,7 @@ local function find_next(bufnr, row, col)
   return nil
 end
 
+--- Go to next footnote reference
 function M.next_footnote()
   local cursor_pos = vim.api.nvim_win_get_cursor(0)
   local row = cursor_pos[1]
@@ -394,6 +425,7 @@ local function find_prev(bufnr, row, col)
   return nil
 end
 
+--- Go to previous footnote reference
 function M.prev_footnote()
   local cursor_pos = vim.api.nvim_win_get_cursor(0)
   local row = cursor_pos[1]
@@ -409,6 +441,8 @@ function M.prev_footnote()
   vim.api.nvim_win_set_cursor(0, { refLocation[1], refLocation[2] })
 end
 
+--- Startup function to setup this plugin
+---@param opts table a list of custom options
 function M.setup(opts)
   opts = opts or {}
   local default = {

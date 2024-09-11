@@ -1,14 +1,14 @@
 # 🏷️ Footnote.nvim
 
 > [!WARNING]
-> This plugin is still under active development. Some features are not fully implemented, and issues are expected.
+> This plugin is still under active development. Some features aren't fully implemented yet. If you experienced unexpected errors, please open an issue.
 
-A neovim plugin that makes working with markdown footnote easier
+A lightweight Neovim plugin that makes working with markdown footnote easier
 
 ## ✨ Features
 
 - Create sequential footnotes
-- Organize footnotes based on occurenc
+- Organize footnotes based on occurrence
 - cleanup orphan footnotes
 - Goto next/prev footnote
 - Move between footnote references and its content
@@ -20,7 +20,7 @@ A neovim plugin that makes working with markdown footnote easier
 
 ## 📦 Installation
 
-install using [lazy.nvim](https://github.com/folke/lazy.nvim):
+Install using [lazy.nvim](https://github.com/folke/lazy.nvim):
 
 ```lua
 return {
@@ -125,8 +125,8 @@ vim.keymap.set(
 
 **Organize footnote**: `require('footnote').organize_footnotes()` (default: `<leader>of`)
 
-- organize all references based on order of orcurrence in the document
-- footnote content would be sorted based on numerical value in the footnote reference
+- organize all references based on order of occurrence in the document
+- footnotes are sorted based on numerical value in their references
 
 ![organize-foonotes-preview](./organize-footnotes-preview.gif)
 
@@ -135,6 +135,7 @@ vim.keymap.set(
 ![organize-on-new-preview](./organize-on-new-preview.gif)
 
 **Next/Prev footnote**: `require('footnote').next_footnote()`, `require('footnote').prev_footnote()` (default: `]f`/`[f]`)
+
 ![footnote-navigation-preview](./footnote-navigation-preview.gif)
 
 ## 💡 Inspiration

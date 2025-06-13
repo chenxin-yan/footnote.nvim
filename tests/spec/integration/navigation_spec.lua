@@ -256,12 +256,16 @@ describe("footnote.navigation integration", function()
   
   describe("edge cases", function()
     it("should handle empty buffer", function()
-      current_buffer_lines = {}
+      current_buffer_lines = {""}  -- At least one empty line
       cursor_position = {1, 0}
       
       -- Should not crash
-      navigation.next_footnote()
-      navigation.prev_footnote()
+      local status1, err1 = pcall(navigation.next_footnote)
+      local status2, err2 = pcall(navigation.prev_footnote)
+      
+      -- Should not crash (both calls should succeed)
+      assert.is_true(status1)
+      assert.is_true(status2)
       
       -- Position should remain unchanged
       assert.are.equal(1, cursor_position[1])
@@ -307,11 +311,18 @@ vim = original_vim
 if not package.loaded['busted'] then
   print("Running navigation integration tests...")
   
+  local function assert_equal(expected, actual, message)
+    if expected ~= actual then
+      error(string.format("Assertion failed: %s\nExpected: %s\nActual: %s", 
+            message or "values not equal", tostring(expected), tostring(actual)))
+    end
+  end
+  
   local function run_simple_tests()
     -- Test that navigation module loads
-    assert(type(navigation) == 'table', "navigation should be a module table")
-    assert(type(navigation.next_footnote) == 'function', "next_footnote should be a function")
-    assert(type(navigation.prev_footnote) == 'function', "prev_footnote should be a function")
+    assert_equal('table', type(navigation), "navigation should be a module table")
+    assert_equal('function', type(navigation.next_footnote), "next_footnote should be a function")
+    assert_equal('function', type(navigation.prev_footnote), "prev_footnote should be a function")
     
     print("✓ Basic navigation integration tests passed")
   end

@@ -3,7 +3,7 @@
 # Test commands
 test:
 	@echo "Running all tests..."
-	@nvim --headless --noplugin -u NONE -c "lua package.path='lua/?.lua;lua/?/init.lua;'..package.path" -c "luafile tests/test_runner.lua" -c "qa!"
+	@nvim --headless --noplugin -u NONE -c "lua package.path='lua/?.lua;lua/?/init.lua;'..package.path" -c "luafile tests/test_runner.lua"
 
 test-watch:
 	@echo "Watching for changes and running tests..."

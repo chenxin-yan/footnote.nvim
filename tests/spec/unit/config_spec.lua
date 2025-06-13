@@ -179,15 +179,22 @@ vim = original_vim
 if not package.loaded['busted'] then
   print("Running config_spec.lua tests...")
   
+  local function assert_equal(expected, actual, message)
+    if expected ~= actual then
+      error(string.format("Assertion failed: %s\nExpected: %s\nActual: %s", 
+            message or "values not equal", tostring(expected), tostring(actual)))
+    end
+  end
+  
   local function run_simple_tests()
     -- Test default_opts structure
-    assert(type(config.default_opts) == 'table', "default_opts should be a table")
-    assert(type(config.default_opts.keys) == 'table', "keys should be a table")
-    assert(config.default_opts.keys.new_footnote == '<C-f>', "new_footnote key should be <C-f>")
+    assert_equal('table', type(config.default_opts), "default_opts should be a table")
+    assert_equal('table', type(config.default_opts.keys), "keys should be a table")
+    assert_equal('<C-f>', config.default_opts.keys.new_footnote, "new_footnote key should be <C-f>")
     
     -- Test that functions exist
-    assert(type(config.setup_keymaps) == 'function', "setup_keymaps should be a function")
-    assert(type(config.setup_autocmds) == 'function', "setup_autocmds should be a function")
+    assert_equal('function', type(config.setup_keymaps), "setup_keymaps should be a function")
+    assert_equal('function', type(config.setup_autocmds), "setup_autocmds should be a function")
     
     print("✓ Basic config tests passed")
   end

@@ -154,18 +154,32 @@ if not package.loaded['busted'] then
   print("Running utils_spec.lua tests...")
   
   -- Simple assertion function for standalone running
+  local function assert_equal(expected, actual, message)
+    if expected ~= actual then
+      error(string.format("Assertion failed: %s\nExpected: %s\nActual: %s", 
+            message or "values not equal", tostring(expected), tostring(actual)))
+    end
+  end
+  
+  local function assert_nil(value, message)
+    if value ~= nil then
+      error(string.format("Assertion failed: %s\nExpected: nil\nActual: %s", 
+            message or "value is not nil", tostring(value)))
+    end
+  end
+  
   local function run_simple_tests()
     -- Test get_next_footnote_number
     local buffer1 = {}
-    assert(utils.get_next_footnote_number(buffer1) == 1, "Empty buffer should return 1")
+    assert_equal(1, utils.get_next_footnote_number(buffer1), "Empty buffer should return 1")
     
     local buffer2 = {"Line with [^5] footnote"}
-    assert(utils.get_next_footnote_number(buffer2) == 6, "Should return next number after existing")
+    assert_equal(6, utils.get_next_footnote_number(buffer2), "Should return next number after existing")
     
     -- Test is_on_ref
     local buffer3 = {"Text[^1]"}
-    assert(utils.is_on_ref(buffer3, 1, 5) == 4, "Should find footnote reference")
-    assert(utils.is_on_ref(buffer3, 1, 0) == nil, "Should not find reference at start")
+    assert_equal(4, utils.is_on_ref(buffer3, 1, 5), "Should find footnote reference")
+    assert_nil(utils.is_on_ref(buffer3, 1, 0), "Should not find reference at start")
     
     print("✓ Basic utils tests passed")
   end

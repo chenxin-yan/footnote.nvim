@@ -228,10 +228,17 @@ vim = original_vim
 if not package.loaded['busted'] then
   print("Running operations integration tests...")
   
+  local function assert_equal(expected, actual, message)
+    if expected ~= actual then
+      error(string.format("Assertion failed: %s\nExpected: %s\nActual: %s", 
+            message or "values not equal", tostring(expected), tostring(actual)))
+    end
+  end
+  
   local function run_simple_tests()
     -- Test that operations module loads
-    assert(type(operations) == 'table', "operations should be a module table")
-    assert(type(operations.new_footnote) == 'function', "new_footnote should be a function")
+    assert_equal('table', type(operations), "operations should be a module table")
+    assert_equal('function', type(operations.new_footnote), "new_footnote should be a function")
     
     print("✓ Basic operations integration tests passed")
   end

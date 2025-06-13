@@ -1,4 +1,4 @@
-clocal M = {}
+local M = {}
 
 --- rename all footnote references with given label to another label
 ---@param bufnr number buffer number
@@ -155,18 +155,32 @@ local function cleanup_orphan(bufnr, orphan_locations)
 end
 
 --- Organize foonote references and content and sort based on occurence
-function M.organize_footnotes()
+---@param skip_colon_check? boolean skip checking for missing colons
+function M.organize_footnotes(skip_colon_check)
   local buffer = vim.api.nvim_buf_get_lines(0, 0, -1, false)
 
   -- find all footnote references with their locations
   local ref_locations = {}
   local content_locations = {}
   local orphan_locations = {}
+  local missing_colon_locations = {}
+
   for i, line in ipairs(buffer) do
     if string.find(line, '^%[%^%d+%]:') then
       content_locations[#content_locations + 1] = i
       goto continue
     end
+
+    -- NOTE: see issue #2
+    -- Check if line starts with [^d] without colon
+    if not skip_colon_check then
+      local footnote_start, footnote_end = string.find(line, '^%[%^%d+%]')
+      if footnote_start and footnote_end then
+        missing_colon_locations[#missing_colon_locations + 1] = { i, footnote_end }
+        goto continue
+      end
+    end
+
     local refStart = 0
     local refEnd = nil
     while true do
@@ -178,6 +192,42 @@ function M.organize_footnotes()
       ref_locations[#ref_locations + 1] = { i, refStart, refEnd }
     end
     ::continue::
+  end
+
+  -- NOTE: see issue #2
+  -- Ask user about adding colons if missing colon locations found
+  if not skip_colon_check and #missing_colon_locations > 0 then
+    vim.ui.select({ 'Yes', 'No, continue', 'Cancel' }, {
+      prompt = #missing_colon_locations .. ' footnote definitions missing colons. Add them?',
+    }, function(choice)
+      if choice == 'Yes' then
+        -- Add colons in reverse order to maintain position accuracy
+        for i = #missing_colon_locations, 1, -1 do
+          local location = missing_colon_locations[i]
+          local row, col = location[1], location[2]
+          vim.api.nvim_buf_set_text(0, row - 1, col, row - 1, col, { ':' })
+          content_locations[#content_locations + 1] = row
+
+          -- Shift ref_locations on the same line that come after the colon insertion
+          for j = 1, #ref_locations do
+            local ref_location = ref_locations[j]
+            if ref_location[1] == row and ref_location[2] > col then
+              ref_locations[j][2] = ref_locations[j][2] + 1 -- shift start position
+              ref_locations[j][3] = ref_locations[j][3] + 1 -- shift end position
+            end
+          end
+        end
+
+        -- Refresh buffer and continue with organization
+        buffer = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+
+        M.organize_footnotes()
+      elseif choice == 'No, continue' then
+        -- Continue organization without adding colons, skip colon check
+        M.organize_footnotes(true)
+      end
+    end)
+    return
   end
 
   -- if no foonote is found, do nothing

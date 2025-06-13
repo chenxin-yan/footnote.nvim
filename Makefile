@@ -8,10 +8,12 @@ test:
 # Development commands
 lint:
 	@echo "Running stylua formatter..."
-	@stylua --check lua/ tests/ || echo "stylua not installed or formatting issues found"
+	@command -v stylua >/dev/null 2>&1 || (echo "❌ stylua not installed! Install with: cargo install stylua --features lua52" && exit 1)
+	@stylua --check lua/ tests/ || (echo "❌ Formatting issues found! Run 'make format' to fix." && exit 1)
 
 format:
 	@echo "Formatting Lua files..."
+	@command -v stylua >/dev/null 2>&1 || (echo "❌ stylua not installed! Install with: cargo install stylua --features lua52" && exit 1)
 	@stylua lua/ tests/
 
 clean:

@@ -51,9 +51,9 @@ jobs:
           if command -v stylua >/dev/null 2>&1; then
             stylua --check lua/ tests/
           else
-            echo "stylua not available, skipping format check"
+            echo "❌ stylua not available - formatting check failed"
+            exit 1
           fi
-        continue-on-error: true
 
       - name: Run Luacheck (if available)
         run: |
@@ -62,6 +62,6 @@ jobs:
             luarocks install luacheck
             luacheck lua/ tests/
           else
-            echo "luarocks not available, skipping luacheck"
+            echo "⚠️  luarocks not available - skipping luacheck (optional)"
           fi
         continue-on-error: true

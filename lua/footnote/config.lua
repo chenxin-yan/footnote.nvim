@@ -51,4 +51,3 @@ function M.setup_autocmds(opts)
 end
 
 return M
-

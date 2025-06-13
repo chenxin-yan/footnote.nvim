@@ -65,4 +65,3 @@ function M.new_footnote()
 end
 
 return M
-

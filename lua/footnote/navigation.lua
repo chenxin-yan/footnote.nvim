@@ -86,4 +86,3 @@ function M.prev_footnote()
 end
 
 return M
-

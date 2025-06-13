@@ -1,16 +1,20 @@
-local M = {}
+clocal M = {}
 
 --- rename all footnote references with given label to another label
 ---@param bufnr number buffer number
 ---@param ref_locations table locations of all the footnote references
+---@param orphan_locations table locations of all the orphan references
 ---@param from number the label to change
 ---@param to number the label to change to
-local function ref_rename(bufnr, ref_locations, from, to)
-  -- TODO: refactor to put ref_locations and ref_deleted into one table
+local function ref_rename(bufnr, ref_locations, orphan_locations, from, to)
   if from == to then
     return
   end
   local buffer = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+
+  -- HACK: currently, orphan detected were marked as negatives
+  local isOrphan = to < 0
+
   for index = 1, #ref_locations, 1 do
     local location = ref_locations[index]
     if location == nil then
@@ -31,6 +35,12 @@ local function ref_rename(bufnr, ref_locations, from, to)
       end
       shift = #tostring(to) - #tostring(from)
       vim.api.nvim_buf_set_text(bufnr, row - 1, startCol + 1, row - 1, endCol - 1, { tostring(to) })
+
+      if isOrphan then
+        -- HACK: endcol + 1 because if "from"" is orphan
+        -- the number will have a "-" prepend to the number after rename
+        orphan_locations[#orphan_locations + 1] = { row, startCol, endCol + 1 }
+      end
     elseif number == to then
       if Opts.debug_print then
         print('ref_rename: ' .. to .. ' -> ' .. from)
@@ -83,13 +93,13 @@ local function content_rename(bufnr, content_locations, from, to)
   end
 end
 
---- Cleanup orphan footnote references in a given buffer
+-- check to see if a given footnote is an orphan
 ---@param bufnr number buffer number
 ---@param ref_locations table locations of all the footnote references
 ---@param content_locations table locations of all the footnote content
 ---@param is_deleted table flags of whether a given footnote reference is deleted
 ---@param from number the refernce label to be checked
-local function cleanup_orphan(bufnr, ref_locations, content_locations, is_deleted, from)
+local function is_orphan(bufnr, ref_locations, content_locations, from)
   local buffer = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   local isOrphan = true
   for _, row in ipairs(content_locations) do
@@ -101,44 +111,46 @@ local function cleanup_orphan(bufnr, ref_locations, content_locations, is_delete
   end
 
   if isOrphan then
-    for index = 1, #ref_locations, 1 do
-      local location = ref_locations[index]
-      if location == nil then
-        goto continue
-      end
-      local label = string.sub(buffer[location[1]], location[2], location[3])
-      local number = tonumber(string.sub(label, 3, -2))
-      local row = location[1]
-      local startCol = location[2]
-      local endCol = location[3]
-
-      if number == from then
-        vim.api.nvim_buf_set_text(bufnr, row - 1, startCol - 1, row - 1, endCol, {})
-        buffer = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-        is_deleted[index] = true
-        if Opts.debug_print then
-          print('cleanup_orphan: ' .. from .. ' at row ' .. row)
-        end
-        local shift = endCol - startCol + 1
-
-        for j = index, #ref_locations, 1 do
-          local next_location = ref_locations[j + 1]
-          if next_location == nil or next_location[1] ~= row then
-            break
-          end
-          ref_locations[j + 1][2] = ref_locations[j + 1][2] - shift
-          ref_locations[j + 1][3] = ref_locations[j + 1][3] - shift
-          if Opts.debug_print then
-            print('shifted(' .. shift .. '): ' .. ref_locations[j + 1][1] .. ', ' .. ref_locations[j + 1][2] .. ':' .. ref_locations[j + 1][3])
-          end
-        end
-      end
-      ::continue::
-    end
-
     return true
-  else
-    return false
+  end
+
+  return false
+end
+
+--- Clean up orphan footnote references in a given buffer
+---@param bufnr number buffer number
+---@param orphan_locations table locations of all the orphans tha needed to be cleaned up
+local function cleanup_orphan(bufnr, orphan_locations)
+  local buffer = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  for index = 1, #orphan_locations, 1 do
+    local location = orphan_locations[index]
+    if location == nil then
+      goto continue
+    end
+    local label = string.sub(buffer[location[1]], location[2], location[3])
+    local row = location[1]
+    local startCol = location[2]
+    local endCol = location[3]
+
+    vim.api.nvim_buf_set_text(bufnr, row - 1, startCol - 1, row - 1, endCol, {})
+    buffer = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+
+    vim.notify('label "' .. label .. '" at row ' .. row .. ' is deleted', vim.log.levels.INFO)
+
+    local shift = endCol - startCol + 1
+
+    for j = index, #orphan_locations, 1 do
+      local next_location = orphan_locations[j + 1]
+      if next_location == nil or orphan_locations[1] ~= row then
+        break
+      end
+      orphan_locations[j + 1][2] = orphan_locations[j + 1][2] - shift
+      orphan_locations[j + 1][3] = orphan_locations[j + 1][3] - shift
+      if Opts.debug_print then
+        print('shifted(' .. shift .. '): ' .. orphan_locations[j + 1][1] .. ', ' .. orphan_locations[j + 1][2] .. ':' .. orphan_locations[j + 1][3])
+      end
+    end
+    ::continue::
   end
 end
 
@@ -149,7 +161,7 @@ function M.organize_footnotes()
   -- find all footnote references with their locations
   local ref_locations = {}
   local content_locations = {}
-  local is_deleted = {}
+  local orphan_locations = {}
   for i, line in ipairs(buffer) do
     if string.find(line, '^%[%^%d+%]:') then
       content_locations[#content_locations + 1] = i
@@ -164,7 +176,6 @@ function M.organize_footnotes()
         break
       end
       ref_locations[#ref_locations + 1] = { i, refStart, refEnd }
-      is_deleted[#is_deleted + 1] = false
     end
     ::continue::
   end
@@ -178,25 +189,23 @@ function M.organize_footnotes()
   local counter = 1
   for index = 1, #ref_locations, 1 do
     local location = ref_locations[index]
-    if is_deleted[index] then
-      goto continue
-    end
     buffer = vim.api.nvim_buf_get_lines(0, 0, -1, false)
     local label = string.sub(buffer[location[1]], location[2], location[3])
     local number = tonumber(string.sub(label, 3, -2))
 
     -- Process foonotes
     if number and number >= counter then
-      if not cleanup_orphan(0, ref_locations, content_locations, is_deleted, number) then
+      if not is_orphan(0, ref_locations, content_locations, number) then
         if Opts.debug_print then
           print(number .. ' -> ' .. counter)
         end
-        ref_rename(0, ref_locations, number, counter)
+        ref_rename(0, ref_locations, orphan_locations, number, counter)
         content_rename(0, content_locations, number, counter)
-        counter = counter + 1
+      else
+        ref_rename(0, ref_locations, orphan_locations, number, -number)
       end
+      counter = counter + 1
     end
-    ::continue::
   end
 
   -- move cursor after sorting/modifying footnote content
@@ -228,6 +237,18 @@ function M.organize_footnotes()
   vim.api.nvim_win_set_cursor(0, { cursor_row, cursor_col })
 
   print 'Organize footnote'
+
+  if #orphan_locations > 0 then
+    vim.schedule(function()
+      vim.ui.select({ 'Yes', 'No' }, {
+        prompt = #orphan_locations .. ' orphans detected. Would you like to purge them?',
+      }, function(choice)
+        if choice == 'Yes' then
+          cleanup_orphan(0, orphan_locations)
+        end
+      end)
+    end)
+  end
 end
 
 return M

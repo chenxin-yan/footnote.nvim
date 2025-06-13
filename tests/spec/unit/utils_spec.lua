@@ -183,4 +183,3 @@ if not package.loaded['busted'] then
 
   run_simple_tests()
 end
-

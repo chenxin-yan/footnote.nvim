@@ -221,4 +221,3 @@ function M.organize_footnotes()
 end
 
 return M
-

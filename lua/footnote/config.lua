@@ -8,8 +8,8 @@ M.default_opts = {
     next_footnote = ']f',
     prev_footnote = '[f',
   },
-  organize_on_save = true,
-  organize_on_new = true,
+  organize_on_save = false,
+  organize_on_new = false,
 }
 
 function M.setup_keymaps(opts)

@@ -3,7 +3,7 @@
 > [!WARNING]
 > This plugin is still under active development. Some features aren't fully implemented yet. If you experienced unexpected errors, please open an issue.
 
-A lightweight Neovim plugin that makes working with markdown footnote easier
+A lightweight Neovim plugin that simplifies working with Markdown footnotes
 
 ## ✨ Features
 
@@ -12,7 +12,7 @@ A lightweight Neovim plugin that makes working with markdown footnote easier
 - cleanup orphan footnotes
 - Goto next/prev footnote
 - Move between footnote references and its content
-- Pick from existing footnotes for insertion`(WIP)`
+- Pick from existing footnotes for insertion `(WIP)`
 
 ## ⚡️ Requirements
 
@@ -55,18 +55,16 @@ local default = {
 ```lua
   return {
     'chenxin-yan/footnote.nvim',
-    ft = 'markdown',
-    config = function()
-      require('footnote').setup {
-        keys = {
-          new_footnote = '<C-f>',
-          organize_footnotes = '',
-          next_footnote = ']f',
-          prev_footnote = '[f',
-        },
-        organize_on_new = false,
-      }
-    end,
+    event = "VeryLazy"
+    opts = {
+      keys = {
+        new_footnote = '<C-f>',
+        organize_footnotes = '',
+        next_footnote = ']f',
+        prev_footnote = '[f',
+      },
+      organize_on_new = false,
+    }
   }
 ```
 
@@ -138,7 +136,7 @@ vim.keymap.set(
 
 ![footnote-navigation-preview](./footnote-navigation-preview.gif)
 
-## 💡 Inspiration
+## 💡 Inspirations
 
 - README.md inspired by [Folke](https://github.com/folke)
 - [markdowny.nvim](https://github.com/antonk52/markdowny.nvim)

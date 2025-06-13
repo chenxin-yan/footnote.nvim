@@ -16,10 +16,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Neovim
-        uses: rhymond/setup-neovim@v1
+      - name: Setup Neovim
+        uses: rhysd/action-setup-vim@v1
         with:
-          neovim-version: ${{ matrix.neovim_version }}
+          neovim: true
+          version: ${{ matrix.neovim_version }}
 
       - name: Install dependencies
         run: |
@@ -30,28 +31,9 @@ jobs:
           git clone --depth 1 https://github.com/nvim-lua/plenary.nvim.git \
             ~/.config/nvim/pack/test/start/plenary.nvim
 
-      - name: Run unit tests
-        run: |
-          make test-unit
-
-      - name: Run integration tests
-        run: |
-          make test-integration
-
       - name: Run all tests
         run: |
           make test
-
-      - name: Check code formatting (if stylua available)
-        run: |
-          # Try to install stylua, but don't fail if it's not available
-          if command -v cargo >/dev/null 2>&1; then
-            cargo install stylua --features lua52 || echo "stylua installation failed, skipping format check"
-            make lint || echo "stylua not available or formatting issues found"
-          else
-            echo "cargo not available, skipping stylua installation"
-          fi
-        continue-on-error: true
 
   lint:
     runs-on: ubuntu-latest

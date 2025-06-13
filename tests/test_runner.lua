@@ -169,7 +169,7 @@ local function run_tests()
   else
     print("\n✅ All tests passed!")
     print("Exit code: 0") 
-    vim.cmd('quit 0') -- Exit successfully
+    vim.cmd('quit') -- Exit successfully
   end
 end
 

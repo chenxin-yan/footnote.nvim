@@ -25,11 +25,9 @@ Install using [lazy.nvim](https://github.com/folke/lazy.nvim):
 ```lua
 return {
   'chenxin-yan/footnote.nvim',
-  config = function()
-    require('footnote').setup {
-      -- add any configuration here
-    }
-  end,
+  opts = {
+    -- add any configuration here
+  }
 }
 ```
 

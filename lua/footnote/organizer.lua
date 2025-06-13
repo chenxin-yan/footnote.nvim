@@ -6,6 +6,7 @@ local M = {}
 ---@param from number the label to change
 ---@param to number the label to change to
 local function ref_rename(bufnr, ref_locations, from, to)
+  -- TODO: refactor to put ref_locations and ref_deleted into one table
   if from == to then
     return
   end
@@ -23,6 +24,7 @@ local function ref_rename(bufnr, ref_locations, from, to)
 
     local shift = 0
 
+    -- swap footnote labels
     if number == from then
       if Opts.debug_print then
         print('ref_rename: ' .. from .. ' -> ' .. to)
@@ -142,6 +144,7 @@ end
 function M.organize_footnotes()
   local buffer = vim.api.nvim_buf_get_lines(0, 0, -1, false)
 
+  -- find all footnote references with their locations
   local ref_locations = {}
   local content_locations = {}
   local is_deleted = {}
@@ -164,10 +167,12 @@ function M.organize_footnotes()
     ::continue::
   end
 
+  -- if no foonote is found, do nothing
   if #ref_locations <= 0 then
     return
   end
 
+  -- iterate footnote and sort labels
   local counter = 1
   for index = 1, #ref_locations, 1 do
     local location = ref_locations[index]
@@ -178,6 +183,7 @@ function M.organize_footnotes()
     local label = string.sub(buffer[location[1]], location[2], location[3])
     local number = tonumber(string.sub(label, 3, -2))
 
+    -- Process foonotes
     if number >= counter then
       if not cleanup_orphan(0, ref_locations, content_locations, is_deleted, number) then
         if Opts.debug_print then
@@ -191,10 +197,13 @@ function M.organize_footnotes()
     ::continue::
   end
 
+  -- move cursor after sorting/modifying footnote content
   local cursor_pos = vim.api.nvim_win_get_cursor(0)
   local cursor_row = cursor_pos[1]
   local cursor_col = cursor_pos[2]
 
+  -- sort footnote content
+  -- TODO: cleanup orphan footnote after sorting
   for i = 1, #content_locations, 1 do
     buffer = vim.api.nvim_buf_get_lines(0, 0, -1, false)
     local target = content_locations[i]
@@ -221,4 +230,3 @@ function M.organize_footnotes()
 end
 
 return M
-

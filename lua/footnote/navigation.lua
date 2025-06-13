@@ -63,11 +63,13 @@ function M.next_footnote()
   local row = cursor_pos[1]
   local col = cursor_pos[2]
 
+  -- get the index of the start of next footnote ref
   local refLocation = find_next(0, row, col)
   if refLocation == nil then
     return
   end
 
+  -- move cursor to the next footnote ref
   vim.api.nvim_win_set_cursor(0, { refLocation[1], refLocation[2] })
 end
 
@@ -77,13 +79,14 @@ function M.prev_footnote()
   local row = cursor_pos[1]
   local col = cursor_pos[2]
 
+  -- get the index of the start of previous footnote ref
   local refLocation = find_prev(0, row, col)
   if refLocation == nil then
     return
   end
 
+  -- move cursor to the next footnote ref
   vim.api.nvim_win_set_cursor(0, { refLocation[1], refLocation[2] })
 end
 
 return M
-

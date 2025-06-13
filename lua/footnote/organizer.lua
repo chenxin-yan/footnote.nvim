@@ -71,12 +71,14 @@ local function content_rename(bufnr, content_locations, from, to)
     local num = string.match(buffer[row], '%d+')
     if tonumber(num) == from then
       local i, j = string.find(buffer[row], '%d+')
-      ---@diagnostic disable-next-line: param-type-mismatch
-      vim.api.nvim_buf_set_text(bufnr, row - 1, i - 1, row - 1, j, { tostring(to) })
+      if i and j then
+        vim.api.nvim_buf_set_text(bufnr, row - 1, i - 1, row - 1, j, { tostring(to) })
+      end
     elseif tonumber(num) == to then
       local i, j = string.find(buffer[row], '%d+')
-      ---@diagnostic disable-next-line: param-type-mismatch
-      vim.api.nvim_buf_set_text(bufnr, row - 1, i - 1, row - 1, j, { tostring(from) })
+      if i and j then
+        vim.api.nvim_buf_set_text(bufnr, row - 1, i - 1, row - 1, j, { tostring(from) })
+      end
     end
   end
 end
@@ -184,7 +186,7 @@ function M.organize_footnotes()
     local number = tonumber(string.sub(label, 3, -2))
 
     -- Process foonotes
-    if number >= counter then
+    if number and number >= counter then
       if not cleanup_orphan(0, ref_locations, content_locations, is_deleted, number) then
         if Opts.debug_print then
           print(number .. ' -> ' .. counter)
@@ -203,7 +205,6 @@ function M.organize_footnotes()
   local cursor_col = cursor_pos[2]
 
   -- sort footnote content
-  -- TODO: cleanup orphan footnote after sorting
   for i = 1, #content_locations, 1 do
     buffer = vim.api.nvim_buf_get_lines(0, 0, -1, false)
     local target = content_locations[i]

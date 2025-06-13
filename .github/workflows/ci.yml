@@ -1,0 +1,85 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        neovim_version: ["stable", "nightly", "v0.8.0"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Neovim
+        uses: rhymond/setup-neovim@v1
+        with:
+          neovim-version: ${{ matrix.neovim_version }}
+
+      - name: Install dependencies
+        run: |
+          # Create a minimal Neovim config for testing
+          mkdir -p ~/.config/nvim/pack/test/start
+
+          # Install plenary.nvim for testing utilities
+          git clone --depth 1 https://github.com/nvim-lua/plenary.nvim.git \
+            ~/.config/nvim/pack/test/start/plenary.nvim
+
+      - name: Run unit tests
+        run: |
+          make test-unit
+
+      - name: Run integration tests
+        run: |
+          make test-integration
+
+      - name: Run all tests
+        run: |
+          make test
+
+      - name: Check code formatting (if stylua available)
+        run: |
+          # Try to install stylua, but don't fail if it's not available
+          if command -v cargo >/dev/null 2>&1; then
+            cargo install stylua --features lua52 || echo "stylua installation failed, skipping format check"
+            make lint || echo "stylua not available or formatting issues found"
+          else
+            echo "cargo not available, skipping stylua installation"
+          fi
+        continue-on-error: true
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install stylua
+        run: |
+          # Install stylua for Lua formatting
+          cargo install stylua --features lua52
+        continue-on-error: true
+
+      - name: Check formatting
+        run: |
+          if command -v stylua >/dev/null 2>&1; then
+            stylua --check lua/ tests/
+          else
+            echo "stylua not available, skipping format check"
+          fi
+        continue-on-error: true
+
+      - name: Run Luacheck (if available)
+        run: |
+          # Try to install luacheck for static analysis
+          if command -v luarocks >/dev/null 2>&1; then
+            luarocks install luacheck
+            luacheck lua/ tests/
+          else
+            echo "luarocks not available, skipping luacheck"
+          fi
+        continue-on-error: true

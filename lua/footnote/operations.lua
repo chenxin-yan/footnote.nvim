@@ -22,7 +22,7 @@ function M.new_footnote()
 
   -- if the footnote already exists and the cursor is on the reference, jump to that footnote
   local til_end = string.sub(buffer[row], word_end + 1, -1)
-  local word_end_ref = string.match(til_end, '^%[%^%d+]')
+  local word_end_ref = string.match(til_end, '^%[%^%-?%d+%]')
   if word_end_ref ~= nil then
     local num = tonumber(string.sub(word_end_ref, 3, -2))
     for i = #buffer, 1, -1 do
@@ -32,12 +32,16 @@ function M.new_footnote()
         return
       end
     end
-    -- if the reference is an orphan, delete it
-    vim.api.nvim_buf_set_text(0, row - 1, word_end, row - 1, word_end + #word_end_ref, {})
+    -- if the reference is an orphan, create a footnote definition for it
+    local footnote_def = string.format('[^%d]: ', num)
+    vim.api.nvim_buf_set_lines(0, -1, -1, false, { '', footnote_def })
+    local line_count = vim.api.nvim_buf_line_count(0)
+    vim.api.nvim_win_set_cursor(0, { line_count, string.len(footnote_def) })
+    vim.cmd 'startinsert!'
     return
   elseif string.match(buffer[row], '^%[%^%d+]:') then
     local num = string.match(buffer[row], '%d+')
-    -- TODO: add multi references support
+    -- TODO: add multi references support. Let user select which footnote they want to go to
     for i, line in ipairs(buffer) do
       local match = string.find(line, '%[%^' .. num .. ']')
       if match ~= nil then

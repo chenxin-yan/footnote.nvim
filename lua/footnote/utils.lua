@@ -53,4 +53,3 @@ function M.is_on_ref(buffer, row, col)
 end
 
 return M
-

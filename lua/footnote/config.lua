@@ -3,8 +3,8 @@ local M = {}
 M.default_opts = {
   debug_print = false,
   keys = {
-    new_footnote = '<C-f>',
-    organize_footnotes = '<leader>of',
+    new_footnote = '<leader>fn',
+    organize_footnotes = '<leader>fo',
     next_footnote = ']f',
     prev_footnote = '[f',
   },

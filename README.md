@@ -36,10 +36,10 @@ Default Configuration:
 local default = {
   debug_print = false, -- enable debug output for renaming operations
   keys = {
-    new_footnote = '<C-f>',       -- works in insert and normal mode
-    organize_footnotes = '<leader>of', -- normal mode only
-    next_footnote = ']f',         -- normal mode only
-    prev_footnote = '[f',         -- normal mode only
+    new_footnote = '<leader>fn',       -- works in insert and normal mode
+    organize_footnotes = '<leader>fo', -- normal mode only
+    next_footnote = ']f',              -- normal mode only
+    prev_footnote = '[f',              -- normal mode only
   },
   organize_on_save = false, -- auto-organize footnotes on file save
   organize_on_new = false,  -- auto-organize when creating a new footnote
@@ -54,7 +54,7 @@ local default = {
     event = "VeryLazy"
     opts = {
       keys = {
-        new_footnote = '<C-f>',
+        new_footnote = '<leader>fn',
         organize_footnotes = '',
         next_footnote = ']f',
         prev_footnote = '[f',
@@ -78,12 +78,12 @@ local default = {
 
 ## ⌨️ Mappings
 
-| Mapping      | Mode           | Description                             |
-| ------------ | -------------- | --------------------------------------- |
-| `<C-f>`      | Insert, Normal | Create new footnote or jump to existing |
-| `<leader>of` | Normal         | Organize footnotes                      |
-| `]f`         | Normal         | Go to next footnote                     |
-| `[f`         | Normal         | Go to previous footnote                 |
+| Mapping       | Mode           | Description                             |
+| ------------- | -------------- | --------------------------------------- |
+| `<leader>fn`  | Insert, Normal | Create new footnote or jump to existing |
+| `<leader>fo`  | Normal         | Organize footnotes                      |
+| `]f`          | Normal         | Go to next footnote                     |
+| `[f`          | Normal         | Go to previous footnote                 |
 
 You can disable any keymaps by setting it to `''`, and you can also manually set these keymaps.
 
@@ -98,37 +98,44 @@ require('footnote').setup {
     prev_footnote = '',
   },
 }
-vim.keymap.set(
-  { 'i', 'n' },
-  opts.keys.new_footnote,
-  "<cmd>lua require('footnote').new_footnote()<cr>",
-  { buffer = 0, silent = true, desc = 'Create markdown footnote' }
-)
-vim.keymap.set(
-  { 'n' },
-  opts.keys.organize_footnotes,
-  "<cmd>lua require('footnote').organize_footnotes()<cr>",
-  { buffer = 0, silent = true, desc = 'Organize footnote' }
-)
-vim.keymap.set(
-  { 'n' },
-  opts.keys.next_footnote,
-  "<cmd>lua require('footnote').next_footnote()<cr>",
-  { buffer = 0, silent = true, desc = 'Next footnote' }
-)
-vim.keymap.set(
-  { 'n' },
-  opts.keys.prev_footnote,
-  "<cmd>lua require('footnote').prev_footnote()<cr>",
-  { buffer = 0, silent = true, desc = 'Previous footnote' }
-)
+
+-- Set up keymaps for markdown files only
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'markdown',
+  callback = function()
+    vim.keymap.set(
+      { 'i', 'n' },
+      '<leader>fn',
+      "<cmd>lua require('footnote').new_footnote()<cr>",
+      { buffer = 0, silent = true, desc = 'Create markdown footnote' }
+    )
+    vim.keymap.set(
+      'n',
+      '<leader>fo',
+      "<cmd>lua require('footnote').organize_footnotes()<cr>",
+      { buffer = 0, silent = true, desc = 'Organize footnotes' }
+    )
+    vim.keymap.set(
+      'n',
+      ']f',
+      "<cmd>lua require('footnote').next_footnote()<cr>",
+      { buffer = 0, silent = true, desc = 'Next footnote' }
+    )
+    vim.keymap.set(
+      'n',
+      '[f',
+      "<cmd>lua require('footnote').prev_footnote()<cr>",
+      { buffer = 0, silent = true, desc = 'Previous footnote' }
+    )
+  end,
+})
 ```
 
 </details>
 
 ## 🚀 Usage
 
-**Create new footnote**: `require('footnote').new_footnote()` (default: `<C-f>`)
+**Create new footnote**: `require('footnote').new_footnote()` (default: `<leader>fn`)
 
 - If cursor is on/before an existing footnote reference, jumps to the corresponding definition
 - If cursor is on a footnote definition, jumps to the first reference (clears orphan definitions)
@@ -137,7 +144,7 @@ vim.keymap.set(
 
 ![new-footnote-preview](./new-footnote-preview.gif)
 
-**Organize footnote**: `require('footnote').organize_footnotes()` (default: `<leader>of`)
+**Organize footnote**: `require('footnote').organize_footnotes()` (default: `<leader>fo`)
 
 - Organizes all references based on order of occurrence in the document
 - Footnotes are sorted based on numerical value in their references

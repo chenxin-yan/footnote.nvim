@@ -1,8 +1,5 @@
 # 🏷️ Footnote.nvim
 
-> [!WARNING]
-> This plugin is still under active development. Some features aren't fully implemented yet. If you experienced unexpected errors, please open an issue.
-
 A lightweight Neovim plugin that simplifies working with Markdown footnotes
 
 ## ✨ Features
@@ -16,7 +13,7 @@ A lightweight Neovim plugin that simplifies working with Markdown footnotes
 
 ## ⚡️ Requirements
 
-`(WIP)`
+- Neovim >= 0.7.0
 
 ## 📦 Installation
 
@@ -37,14 +34,15 @@ Default Configuration:
 
 ```lua
 local default = {
+  debug_print = false, -- enable debug output for renaming operations
   keys = {
-    new_footnote = '<C-f>',
-    organize_footnotes = '<leader>of',
-    next_footnote = ']f',
-    prev_footnote = '[f',
+    new_footnote = '<C-f>',       -- works in insert and normal mode
+    organize_footnotes = '<leader>of', -- normal mode only
+    next_footnote = ']f',         -- normal mode only
+    prev_footnote = '[f',         -- normal mode only
   },
-  organize_on_save = false,
-  organize_on_new = false,
+  organize_on_save = false, -- auto-organize footnotes on file save
+  organize_on_new = false,  -- auto-organize when creating a new footnote
 }
 ```
 
@@ -68,7 +66,24 @@ local default = {
 
 </details>
 
+## API Reference
+
+| Function                                   | Description                                       |
+| ------------------------------------------ | ------------------------------------------------- |
+| `require('footnote').setup(opts)`          | Initialize the plugin with optional configuration |
+| `require('footnote').new_footnote()`       | Create a new footnote or jump to existing one     |
+| `require('footnote').organize_footnotes()` | Organize and renumber all footnotes by occurrence |
+| `require('footnote').next_footnote()`      | Navigate to the next footnote reference           |
+| `require('footnote').prev_footnote()`      | Navigate to the previous footnote reference       |
+
 ## ⌨️ Mappings
+
+| Mapping      | Mode           | Description                             |
+| ------------ | -------------- | --------------------------------------- |
+| `<C-f>`      | Insert, Normal | Create new footnote or jump to existing |
+| `<leader>of` | Normal         | Organize footnotes                      |
+| `]f`         | Normal         | Go to next footnote                     |
+| `[f`         | Normal         | Go to previous footnote                 |
 
 You can disable any keymaps by setting it to `''`, and you can also manually set these keymaps.
 
@@ -115,22 +130,27 @@ vim.keymap.set(
 
 **Create new footnote**: `require('footnote').new_footnote()` (default: `<C-f>`)
 
-- if a footnote reference already exists at the end of the word under cursor, it would jump to that footnote
+- If cursor is on/before an existing footnote reference, jumps to the corresponding definition
+- If cursor is on a footnote definition, jumps to the first reference (clears orphan definitions)
+- If cursor is on an orphan reference (no definition), creates a new definition
+- Otherwise, creates a new sequential footnote at end of current word
 
 ![new-footnote-preview](./new-footnote-preview.gif)
 
 **Organize footnote**: `require('footnote').organize_footnotes()` (default: `<leader>of`)
 
-- organize all references based on order of occurrence in the document
-- footnotes are sorted based on numerical value in their references
+- Organizes all references based on order of occurrence in the document
+- Footnotes are sorted based on numerical value in their references
+- Detects and prompts to fix footnote definitions missing colons (e.g., `[^1]` -> `[^1]:`)
+- Detects orphan references (references without definitions) and prompts to delete them
 
 ![organize-foonotes-preview](./organize-footnotes-preview.gif)
 
-**Organize on new footnote**: `opts = {organize_on_new = true}` (default: `true`)
+**Organize on new footnote**: `opts = {organize_on_new = true}` (default: `false`)
 
 ![organize-on-new-preview](./organize-on-new-preview.gif)
 
-**Next/Prev footnote**: `require('footnote').next_footnote()`, `require('footnote').prev_footnote()` (default: `]f`/`[f]`)
+**Next/Prev footnote**: `require('footnote').next_footnote()`, `require('footnote').prev_footnote()` (default: `]f`/`[f`)
 
 ![footnote-navigation-preview](./footnote-navigation-preview.gif)
 

@@ -36,10 +36,15 @@ Default Configuration:
 local default = {
   debug_print = false, -- enable debug output for renaming operations
   keys = {
-    new_footnote = '<leader>fn',       -- works in insert and normal mode
-    organize_footnotes = '<leader>fo', -- normal mode only
-    next_footnote = ']f',              -- normal mode only
-    prev_footnote = '[f',              -- normal mode only
+    n = { -- normal mode
+      new_footnote = '<leader>fn',
+      organize_footnotes = '<leader>fo',
+      next_footnote = ']f',
+      prev_footnote = '[f',
+    },
+    i = { -- insert mode
+      new_footnote = '<C-f>',
+    },
   },
   organize_on_save = false, -- auto-organize footnotes on file save
   organize_on_new = false,  -- auto-organize when creating a new footnote
@@ -49,19 +54,24 @@ local default = {
 <details><summary>Example Configuration</summary>
 
 ```lua
-  return {
-    'chenxin-yan/footnote.nvim',
-    event = "VeryLazy"
-    opts = {
-      keys = {
+return {
+  'chenxin-yan/footnote.nvim',
+  event = "VeryLazy",
+  opts = {
+    keys = {
+      n = {
         new_footnote = '<leader>fn',
-        organize_footnotes = '',
+        organize_footnotes = '', -- disable organize keymap
         next_footnote = ']f',
         prev_footnote = '[f',
       },
-      organize_on_new = true,
-    }
+      i = {
+        new_footnote = '<C-f>',
+      },
+    },
+    organize_on_new = true,
   }
+}
 ```
 
 </details>
@@ -78,24 +88,22 @@ local default = {
 
 ## ⌨️ Mappings
 
-| Mapping       | Mode           | Description                             |
-| ------------- | -------------- | --------------------------------------- |
-| `<leader>fn`  | Insert, Normal | Create new footnote or jump to existing |
-| `<leader>fo`  | Normal         | Organize footnotes                      |
-| `]f`          | Normal         | Go to next footnote                     |
-| `[f`          | Normal         | Go to previous footnote                 |
-
-You can disable any keymaps by setting it to `''`, and you can also manually set these keymaps.
+You can disable any keymap by setting it to `''`, and you can also manually set these keymaps.
 
 <details><summary>Set Keymaps Manually</summary>
 
 ```lua
 require('footnote').setup {
   keys = {
-    new_footnote = '',
-    organize_footnotes = '',
-    next_footnote = '',
-    prev_footnote = '',
+    n = {
+      new_footnote = '',
+      organize_footnotes = '',
+      next_footnote = '',
+      prev_footnote = '',
+    },
+    i = {
+      new_footnote = '',
+    },
   },
 }
 
@@ -104,8 +112,14 @@ vim.api.nvim_create_autocmd('FileType', {
   pattern = 'markdown',
   callback = function()
     vim.keymap.set(
-      { 'i', 'n' },
+      'n',
       '<leader>fn',
+      "<cmd>lua require('footnote').new_footnote()<cr>",
+      { buffer = 0, silent = true, desc = 'Create markdown footnote' }
+    )
+    vim.keymap.set(
+      'i',
+      '<C-f>',
       "<cmd>lua require('footnote').new_footnote()<cr>",
       { buffer = 0, silent = true, desc = 'Create markdown footnote' }
     )

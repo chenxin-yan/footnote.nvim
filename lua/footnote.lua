@@ -23,6 +23,14 @@ end
 
 function M.setup(opts)
   opts = opts or {}
+
+  -- Detect and warn about legacy keymap config
+  -- TODO: Remove legacy config support
+  if opts.keys and config.is_legacy_keys(opts.keys) then
+    config.notify_legacy_config()
+    opts.keys = config.migrate_legacy_keys(opts.keys)
+  end
+
   Opts = vim.tbl_deep_extend('force', config.default_opts, opts)
 
   config.setup_keymaps(Opts)
@@ -30,4 +38,3 @@ function M.setup(opts)
 end
 
 return M
-

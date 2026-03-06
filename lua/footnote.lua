@@ -31,10 +31,11 @@ function M.setup(opts)
     opts.keys = config.migrate_legacy_keys(opts.keys)
   end
 
-  Opts = vim.tbl_deep_extend('force', config.default_opts, opts)
+  local merged_opts = vim.tbl_deep_extend('force', config.default_opts, opts)
+  config.set_opts(merged_opts)
 
-  config.setup_keymaps(Opts)
-  config.setup_autocmds(Opts)
+  config.setup_keymaps(merged_opts)
+  config.setup_autocmds(merged_opts)
 end
 
 return M

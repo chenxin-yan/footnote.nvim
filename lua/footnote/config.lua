@@ -17,6 +17,8 @@ M.default_opts = {
   organize_on_new = false,
 }
 
+local current_opts = vim.deepcopy(M.default_opts)
+
 -- Keymap definitions: action -> { cmd, desc }
 local keymap_actions = {
   new_footnote = {
@@ -74,18 +76,40 @@ function M.migrate_legacy_keys(keys)
   }
 end
 
+function M.get_opts()
+  return current_opts
+end
+
+function M.set_opts(opts)
+  current_opts = opts or vim.deepcopy(M.default_opts)
+end
+
+local function apply_keymaps(bufnr, opts)
+  for mode, mappings in pairs(opts.keys) do
+    for action, lhs in pairs(mappings) do
+      if lhs ~= '' and keymap_actions[action] then
+        vim.keymap.set(mode, lhs, keymap_actions[action].cmd, { desc = keymap_actions[action].desc, buffer = bufnr })
+      end
+    end
+  end
+end
+
 function M.setup_keymaps(opts)
+  local group = vim.api.nvim_create_augroup('footnote.nvim keymaps', { clear = true })
+
+  -- Apply keymaps to existing markdown buffers.
+  for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_is_valid(bufnr) and vim.bo[bufnr].filetype == 'markdown' then
+      apply_keymaps(bufnr, opts)
+    end
+  end
+
   vim.api.nvim_create_autocmd('FileType', {
+    group = group,
     desc = 'footnote.nvim keymaps',
     pattern = { 'markdown' },
-    callback = function()
-      for mode, mappings in pairs(opts.keys) do
-        for action, lhs in pairs(mappings) do
-          if lhs ~= '' and keymap_actions[action] then
-            vim.keymap.set(mode, lhs, keymap_actions[action].cmd, { desc = keymap_actions[action].desc, buffer = 0 })
-          end
-        end
-      end
+    callback = function(args)
+      apply_keymaps(args.buf, opts)
     end,
   })
 end

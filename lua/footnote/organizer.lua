@@ -1,4 +1,5 @@
 local M = {}
+local config = require 'footnote.config'
 
 --- Mark a footnote reference as orphan
 ---@param bufnr number buffer number
@@ -88,13 +89,13 @@ local function ref_rename(bufnr, ref_locations, from, to)
 
     -- swap footnote labels
     if number == from then
-      if Opts.debug_print then
+      if config.get_opts().debug_print then
         print('ref_rename: ' .. from .. ' -> ' .. to)
       end
       shift = #tostring(to) - #tostring(from)
       vim.api.nvim_buf_set_text(bufnr, row - 1, startCol + 1, row - 1, endCol - 1, { tostring(to) })
     elseif number == to then
-      if Opts.debug_print then
+      if config.get_opts().debug_print then
         print('ref_rename: ' .. to .. ' -> ' .. from)
       end
       vim.api.nvim_buf_set_text(bufnr, row - 1, startCol + 1, row - 1, endCol - 1, { tostring(from) })
@@ -109,7 +110,7 @@ local function ref_rename(bufnr, ref_locations, from, to)
         end
         ref_locations[j + 1][2] = ref_locations[j + 1][2] + shift
         ref_locations[j + 1][3] = ref_locations[j + 1][3] + shift
-        if Opts.debug_print then
+        if config.get_opts().debug_print then
           print('shifted(' .. shift .. '): ' .. ref_locations[j + 1][1] .. ', ' .. ref_locations[j + 1][2] .. ':' .. ref_locations[j + 1][3])
         end
       end
@@ -290,7 +291,7 @@ function M.organize_footnotes(skip_colon_check)
   local counter = 1
   for _, number in ipairs(unique_numbers) do
     if not is_orphan(0, content_locations, number) then
-      if Opts.debug_print then
+      if config.get_opts().debug_print then
         print(number .. ' -> ' .. counter)
       end
       ref_rename(0, ref_locations, number, counter)

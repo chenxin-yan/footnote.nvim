@@ -1,5 +1,6 @@
 local utils = require 'footnote.utils'
 local organizer = require 'footnote.organizer'
+local config = require 'footnote.config'
 
 local M = {}
 
@@ -73,7 +74,7 @@ function M.new_footnote()
   vim.api.nvim_win_set_cursor(0, { line_count, string.len(footnote_content) })
   vim.cmd 'startinsert!'
 
-  if Opts.organize_on_new then
+  if config.get_opts().organize_on_new then
     organizer.organize_footnotes()
   end
 end

@@ -8,13 +8,18 @@ M.default_opts = {
       organize_footnotes = '<leader>fo',
       next_footnote = ']f',
       prev_footnote = '[f',
+      link_footnote = '<leader>fl',
     },
     i = {
       new_footnote = '<C-f>',
     },
+    v = {
+      link_footnote = '<leader>fl',
+    },
   },
   organize_on_save = false,
   organize_on_new = false,
+  case_sensitive_link = true,
 }
 
 local current_opts = vim.deepcopy(M.default_opts)
@@ -37,6 +42,10 @@ local keymap_actions = {
     cmd = "<cmd>lua require('footnote').prev_footnote()<cr>",
     desc = 'Previous footnote',
   },
+  link_footnote = {
+    cmd = ":<C-u>lua require('footnote').link_footnote()<cr>",
+    desc = 'Link all occurrences to footnote',
+  },
 }
 
 --- Check if keys config uses legacy flat structure
@@ -44,7 +53,11 @@ local keymap_actions = {
 ---@param keys table the keys config table
 ---@return boolean true if legacy format detected
 function M.is_legacy_keys(keys)
-  return keys.new_footnote ~= nil or keys.organize_footnotes ~= nil or keys.next_footnote ~= nil or keys.prev_footnote ~= nil
+  return keys.new_footnote ~= nil
+    or keys.organize_footnotes ~= nil
+    or keys.next_footnote ~= nil
+    or keys.prev_footnote ~= nil
+    or keys.link_footnote ~= nil
 end
 
 --- Notify user about deprecated keymap config format
@@ -69,9 +82,13 @@ function M.migrate_legacy_keys(keys)
       organize_footnotes = keys.organize_footnotes,
       next_footnote = keys.next_footnote,
       prev_footnote = keys.prev_footnote,
+      link_footnote = keys.link_footnote,
     },
     i = {
       new_footnote = keys.new_footnote,
+    },
+    v = {
+      link_footnote = keys.link_footnote,
     },
   }
 end

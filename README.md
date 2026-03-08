@@ -5,6 +5,7 @@ A lightweight Neovim plugin that simplifies working with Markdown footnotes
 ## ✨ Features
 
 - Create sequential footnotes
+- Link all occurrences of a word to the same footnote
 - Organize footnotes based on occurrence
 - cleanup orphan footnotes
 - Goto next/prev footnote
@@ -41,13 +42,18 @@ local default = {
       organize_footnotes = '<leader>fo',
       next_footnote = ']f',
       prev_footnote = '[f',
+      link_footnote = '<leader>fl',
     },
     i = { -- insert mode
       new_footnote = '<C-f>',
     },
+    v = { -- visual mode
+      link_footnote = '<leader>fl',
+    },
   },
   organize_on_save = false, -- auto-organize footnotes on file save
   organize_on_new = false,  -- auto-organize when creating a new footnote
+  case_sensitive_link = true, -- case-sensitive word matching for link_footnote
 }
 ```
 
@@ -64,9 +70,13 @@ return {
         organize_footnotes = '', -- disable organize keymap
         next_footnote = ']f',
         prev_footnote = '[f',
+        link_footnote = '<leader>fl',
       },
       i = {
         new_footnote = '<C-f>',
+      },
+      v = {
+        link_footnote = '<leader>fl',
       },
     },
     organize_on_new = true,
@@ -78,13 +88,14 @@ return {
 
 ## API Reference
 
-| Function                                   | Description                                       |
-| ------------------------------------------ | ------------------------------------------------- |
-| `require('footnote').setup(opts)`          | Initialize the plugin with optional configuration |
-| `require('footnote').new_footnote()`       | Create a new footnote or jump to existing one     |
-| `require('footnote').organize_footnotes()` | Organize and renumber all footnotes by occurrence |
-| `require('footnote').next_footnote()`      | Navigate to the next footnote reference           |
-| `require('footnote').prev_footnote()`      | Navigate to the previous footnote reference       |
+| Function                                   | Description                                         |
+| ------------------------------------------ | --------------------------------------------------- |
+| `require('footnote').setup(opts)`          | Initialize the plugin with optional configuration   |
+| `require('footnote').new_footnote()`       | Create a new footnote or jump to existing one        |
+| `require('footnote').link_footnote()`      | Link all occurrences of a word to the same footnote  |
+| `require('footnote').organize_footnotes()` | Organize and renumber all footnotes by occurrence    |
+| `require('footnote').next_footnote()`      | Navigate to the next footnote reference              |
+| `require('footnote').prev_footnote()`      | Navigate to the previous footnote reference          |
 
 ## ⌨️ Mappings
 
@@ -100,9 +111,13 @@ require('footnote').setup {
       organize_footnotes = '',
       next_footnote = '',
       prev_footnote = '',
+      link_footnote = '',
     },
     i = {
       new_footnote = '',
+    },
+    v = {
+      link_footnote = '',
     },
   },
 }
@@ -141,6 +156,12 @@ vim.api.nvim_create_autocmd('FileType', {
       "<cmd>lua require('footnote').prev_footnote()<cr>",
       { buffer = 0, silent = true, desc = 'Previous footnote' }
     )
+    vim.keymap.set(
+      { 'n', 'v' },
+      '<leader>fl',
+      ":<C-u>lua require('footnote').link_footnote()<cr>",
+      { buffer = 0, silent = true, desc = 'Link all occurrences to footnote' }
+    )
   end,
 })
 ```
@@ -157,6 +178,16 @@ vim.api.nvim_create_autocmd('FileType', {
 - Otherwise, creates a new sequential footnote at end of current word
 
 ![new-footnote-preview](./new-footnote-preview.gif)
+
+**Link footnote**: `require('footnote').link_footnote()` (default: `<leader>fl`)
+
+- Works in both normal and visual mode
+- In **normal mode**, uses the word under the cursor as the search term
+- In **visual mode**, uses the selected text as the search term
+- If one occurrence of the word already has a footnote, all other occurrences are linked to the same reference
+- If no occurrence has a footnote, a new footnote is created and all occurrences are linked to it
+- Occurrences inside footnote definition lines are skipped
+- Set `case_sensitive_link = false` to match words case-insensitively
 
 **Organize footnote**: `require('footnote').organize_footnotes()` (default: `<leader>fo`)
 

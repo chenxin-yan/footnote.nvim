@@ -21,6 +21,10 @@ function M.prev_footnote()
   navigation.prev_footnote()
 end
 
+function M.link_footnote()
+  operations.link_footnote()
+end
+
 function M.setup(opts)
   opts = opts or {}
 
